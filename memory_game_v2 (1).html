@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memoria Gelal</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Nunito:wght@400;700;900&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(160deg, #fde8d8 0%, #f9c9a8 50%, #f5a87a 100%);
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .header { text-align: center; margin-bottom: 14px; }
+  .tagline {
+    font-size: 0.68em; font-weight: 900; letter-spacing: 3px;
+    color: #c0552a; text-transform: uppercase; margin-top: 3px;
+  }
+  .stats {
+    display: flex; gap: 24px; margin-bottom: 16px;
+    background: rgba(255,255,255,0.55);
+    padding: 9px 28px; border-radius: 30px;
+    font-size: 0.95em; font-weight: 700; color: #7a3020;
+    box-shadow: 0 2px 10px rgba(200,100,60,0.15);
+  }
+  .stats span { color: #e8472a; font-size: 1.15em; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 11px; max-width: 430px; width: 100%;
+  }
+  .card { aspect-ratio: 0.72; cursor: pointer; perspective: 700px; border-radius: 14px; }
+  .card-inner {
+    width: 100%; height: 100%;
+    position: relative; transform-style: preserve-3d;
+    transition: transform 0.45s ease; border-radius: 14px;
+  }
+  .card.flipped .card-inner, .card.matched .card-inner { transform: rotateY(180deg); }
+  .card-front, .card-back {
+    position: absolute; width: 100%; height: 100%;
+    backface-visibility: hidden; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 14px rgba(150,60,20,0.22);
+  }
+  .card-front {
+    background: linear-gradient(160deg, #fde8d8, #f9c5a0);
+    border: 2.5px solid #f0a070;
+    overflow: hidden;
+  }
+  .card-back {
+    background: linear-gradient(160deg, #fffdf9, #fff3ea);
+    transform: rotateY(180deg);
+    border: 2.5px solid #f0b080;
+    font-size: 2.4em;
+  }
+  .card.matched .card-back {
+    background: linear-gradient(160deg, #d4f5e2, #b8edcc);
+    border: 2.5px solid #3db86a;
+    animation: pop 0.3s ease;
+  }
+  @keyframes pop {
+    0%   { transform: rotateY(180deg) scale(1); }
+    50%  { transform: rotateY(180deg) scale(1.13); }
+    100% { transform: rotateY(180deg) scale(1); }
+  }
+  .card:hover:not(.flipped):not(.matched) .card-inner {
+    transform: rotateY(12deg) scale(1.04);
+  }
+  .btn {
+    margin-top: 18px; padding: 12px 38px;
+    background: linear-gradient(135deg, #e8472a, #f7941d);
+    color: #fff; font-family: 'Nunito', sans-serif;
+    font-size: 1em; font-weight: 900; letter-spacing: 1px;
+    border: none; border-radius: 30px; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(232,71,42,0.35);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .btn:hover { transform: scale(1.06); box-shadow: 0 6px 22px rgba(232,71,42,0.5); }
+  .win-msg {
+    display: none; text-align: center; margin-top: 14px;
+    font-size: 1.2em; font-weight: 900; color: #7a3020;
+    animation: fadeIn 0.5s ease;
+  }
+  @keyframes fadeIn { from{opacity:0;transform:scale(0.8);}to{opacity:1;transform:scale(1);} }
+
+  /* ── FLOATING BACKGROUND ── */
+  .floaters {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+  }
+  .floater {
+    position: absolute;
+    font-size: 2em;
+    opacity: 0.18;
+    animation: floatUp linear infinite;
+    user-select: none;
+  }
+  @keyframes floatUp {
+    0%   { transform: translateY(110vh) rotate(0deg) scale(1); opacity: 0; }
+    10%  { opacity: 0.18; }
+    90%  { opacity: 0.18; }
+    100% { transform: translateY(-15vh) rotate(360deg) scale(1.1); opacity: 0; }
+  }
+  /* make sure content is above floaters */
+  .header, .stats, .grid, .win-msg, .btn { position: relative; z-index: 1; }
+</style>
+</head>
+<body>
+
+<div class="floaters" id="floaters"></div>
+
+<!-- LOGO HEADER -->
+<div class="header">
+  <svg viewBox="0 0 240 80" width="240" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="gG" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#d42b1a"/>
+        <stop offset="40%" stop-color="#f7941d"/>
+        <stop offset="100%" stop-color="#f5d020"/>
+      </linearGradient>
+      <filter id="sh"><feDropShadow dx="1" dy="2" stdDeviation="2" flood-color="#00000033"/></filter>
+    </defs>
+    <g transform="translate(8,8)">
+      <path d="M4,38 Q22,2 42,38"  fill="none" stroke="#d42b1a" stroke-width="5.5" stroke-linecap="round"/>
+      <path d="M9,38 Q22,8 36,38"  fill="none" stroke="#f7941d" stroke-width="4.5" stroke-linecap="round"/>
+      <path d="M14,38 Q22,14 31,38" fill="none" stroke="#f5d020" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M18,38 Q22,18 27,38" fill="none" stroke="#5cb85c" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <text x="62" y="58" font-family="'Dancing Script',cursive" font-size="58" font-weight="700"
+          fill="url(#gG)" filter="url(#sh)" letter-spacing="-1">Gelal</text>
+    <text x="200" y="22" font-family="Arial" font-size="13" fill="#d42b1a" font-weight="bold">®</text>
+  </svg>
+  <div class="tagline">Juego de Memoria</div>
+</div>
+
+<div class="stats">
+  Intentos: <span id="moves">0</span> &nbsp;|&nbsp; Pares: <span id="pairs">0</span>/8
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="win-msg" id="winMsg">
+  🎉 ¡Neutralizaste la acidez! Terminaste en <span id="finalMoves"></span> intentos.
+</div>
+
+<button class="btn" onclick="initGame()">🔄 Nueva Partida</button>
+
+<script>
+const emojis = ['🍋','🌶️','🍊','☕','🍇','🧅','🍅','🫙'];
+
+// Floating background items
+const floatItems = ['🍋','🌶️','🍊','☕','🍇','🧅','🍅','🫙','🍫','🧄','🍷','🥤'];
+const floatersEl = document.getElementById('floaters');
+floatItems.forEach((emoji, i) => {
+  for(let j = 0; j < 3; j++){
+    const el = document.createElement('div');
+    el.className = 'floater';
+    el.textContent = emoji;
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.animationDuration = (8 + Math.random() * 14) + 's';
+    el.style.animationDelay = (Math.random() * 12) + 's';
+    el.style.fontSize = (1.2 + Math.random() * 1.8) + 'em';
+    floatersEl.appendChild(el);
+  }
+});
+
+const bottleSVG = `<svg width="72%" viewBox="0 0 120 200" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="bodyG" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#ddd"/>
+    <stop offset="30%" stop-color="#f8f8f8"/>
+    <stop offset="60%" stop-color="#ffffff"/>
+    <stop offset="85%" stop-color="#e8e8e8"/>
+    <stop offset="100%" stop-color="#ccc"/>
+  </linearGradient>
+  <linearGradient id="labelG" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#f5b48a"/>
+    <stop offset="30%" stop-color="#fcd4b5"/>
+    <stop offset="60%" stop-color="#fdd9bc"/>
+    <stop offset="100%" stop-color="#f0a878"/>
+  </linearGradient>
+  <linearGradient id="capG" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#bbb"/>
+    <stop offset="40%" stop-color="#efefef"/>
+    <stop offset="100%" stop-color="#bbb"/>
+  </linearGradient>
+  <linearGradient id="logoTG" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#c0381a"/>
+    <stop offset="50%" stop-color="#f7941d"/>
+    <stop offset="100%" stop-color="#f0c830"/>
+  </linearGradient>
+  <filter id="bSh"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="#00000025"/></filter>
+</defs>
+
+<!-- sombra -->
+<ellipse cx="60" cy="195" rx="30" ry="5" fill="#00000015"/>
+
+<!-- tapa con estrías -->
+<rect x="42" y="2" width="36" height="6" rx="3" fill="url(#capG)" stroke="#aaa" stroke-width="0.5"/>
+<rect x="40" y="6" width="40" height="20" rx="5" fill="url(#capG)" stroke="#aaa" stroke-width="0.5"/>
+<!-- líneas tapa -->
+<line x1="46" y1="7" x2="46" y2="25" stroke="#bbb" stroke-width="0.6"/>
+<line x1="52" y1="7" x2="52" y2="25" stroke="#bbb" stroke-width="0.6"/>
+<line x1="58" y1="7" x2="58" y2="25" stroke="#bbb" stroke-width="0.6"/>
+<line x1="64" y1="7" x2="64" y2="25" stroke="#bbb" stroke-width="0.6"/>
+<line x1="70" y1="7" x2="70" y2="25" stroke="#bbb" stroke-width="0.6"/>
+<line x1="74" y1="7" x2="74" y2="25" stroke="#bbb" stroke-width="0.6"/>
+
+<!-- cuello -->
+<path d="M44,26 L40,46 L80,46 L76,26 Z" fill="url(#bodyG)" stroke="#ccc" stroke-width="0.5"/>
+
+<!-- cuerpo principal - forma redondeada abajo y ancha -->
+<path d="M40,46 Q20,55 18,90 Q16,130 18,160 Q20,188 60,190 Q100,188 102,160 Q104,130 102,90 Q100,55 80,46 Z"
+      fill="url(#bodyG)" stroke="#ccc" stroke-width="0.8" filter="url(#bSh)"/>
+
+<!-- etiqueta salmón -->
+<path d="M22,75 Q20,90 20,110 Q20,145 22,162 Q24,175 60,176 Q96,175 98,162 Q100,145 100,110 Q100,90 98,75 Q96,68 60,68 Q24,68 22,75 Z"
+      fill="url(#labelG)"/>
+
+<!-- arco de colores (logo) -->
+<g transform="translate(28, 82)">
+  <path d="M2,22 Q14,2 28,22"  fill="none" stroke="#c0381a" stroke-width="4"   stroke-linecap="round"/>
+  <path d="M5,22 Q14,5 24,22"  fill="none" stroke="#f7941d" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M8,22 Q14,9 21,22"  fill="none" stroke="#f5d020" stroke-width="3"   stroke-linecap="round"/>
+  <path d="M11,22 Q14,12 18,22" fill="none" stroke="#4cae4c" stroke-width="2.5" stroke-linecap="round"/>
+</g>
+
+<!-- texto Gelal -->
+<text x="60" y="118" text-anchor="middle"
+      font-family="'Dancing Script',Georgia,cursive"
+      font-size="22" font-weight="700"
+      fill="url(#logoTG)">Gelal</text>
+<text x="83" y="108" font-family="Arial" font-size="6" fill="#c0381a" font-weight="bold">®</text>
+
+<!-- SUSPENSIÓN -->
+<text x="60" y="127" text-anchor="middle" font-family="Arial,sans-serif" font-size="5.5" fill="#555" letter-spacing="1">SUSPENSIÓN</text>
+
+<!-- línea separadora -->
+<line x1="28" y1="130" x2="92" y2="130" stroke="#d4956a" stroke-width="0.5" opacity="0.6"/>
+
+<!-- texto pequeño -->
+<text x="60" y="138" text-anchor="middle" font-family="Arial,sans-serif" font-size="4.2" fill="#333" font-weight="bold">NEUTRALIZANTE INMEDIATO</text>
+<text x="60" y="144" text-anchor="middle" font-family="Arial,sans-serif" font-size="4.2" fill="#333" font-weight="bold">DE LA HIPERACIDEZ</text>
+<text x="60" y="150" text-anchor="middle" font-family="Arial,sans-serif" font-size="4.2" fill="#333" font-weight="bold">GASTRODUODENAL</text>
+
+<!-- CONT. NETO -->
+<text x="36" y="168" font-family="Arial,sans-serif" font-size="5.5" fill="#222" font-weight="900">CONT. NETO</text>
+<text x="36" y="175" font-family="Arial,sans-serif" font-size="5.5" fill="#222" font-weight="900">180g</text>
+
+<!-- brillo izquierdo -->
+<path d="M28,50 Q24,90 24,130 Q24,160 26,170" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" opacity="0.35"/>
+<!-- brillo derecho pequeño -->
+<path d="M88,60 Q86,90 86,120" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+</svg>`;
+
+let flipped=[], matched=0, moves=0, lock=false;
+
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}
+  return arr;
+}
+
+function initGame(){
+  const deck=shuffle([...emojis,...emojis]);
+  flipped=[];matched=0;moves=0;lock=false;
+  document.getElementById('moves').textContent=0;
+  document.getElementById('pairs').textContent=0;
+  document.getElementById('winMsg').style.display='none';
+  const grid=document.getElementById('grid');
+  grid.innerHTML='';
+  deck.forEach((emoji)=>{
+    const card=document.createElement('div');
+    card.className='card';
+    card.dataset.emoji=emoji;
+    card.innerHTML=`<div class="card-inner">
+      <div class="card-front">${bottleSVG}</div>
+      <div class="card-back">${emoji}</div>
+    </div>`;
+    card.addEventListener('click',()=>flipCard(card));
+    grid.appendChild(card);
+  });
+}
+
+function flipCard(card){
+  if(lock||card.classList.contains('flipped')||card.classList.contains('matched'))return;
+  card.classList.add('flipped');
+  flipped.push(card);
+  if(flipped.length===2){
+    lock=true;moves++;
+    document.getElementById('moves').textContent=moves;
+    const[a,b]=flipped;
+    if(a.dataset.emoji===b.dataset.emoji){
+      a.classList.add('matched');b.classList.add('matched');
+      matched++;document.getElementById('pairs').textContent=matched;
+      flipped=[];lock=false;
+      if(matched===8){
+        document.getElementById('finalMoves').textContent=moves;
+        document.getElementById('winMsg').style.display='block';
+      }
+    }else{
+      setTimeout(()=>{a.classList.remove('flipped');b.classList.remove('flipped');flipped=[];lock=false;},900);
+    }
+  }
+}
+
+initGame();
+</script>
+</body>
+</html>
